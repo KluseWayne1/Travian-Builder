@@ -32,7 +32,7 @@ Ensure you have Python 3.8+ installed on your environment.
 
 1. Clone the repository
 
-git clone https://github.com/YOUR_USERNAME/Travian-Auto-Builder.git
+git clone https://github.com/KluseWayne1/Travian-Builder.git
 cd Travian-Auto-Builder
 
 
