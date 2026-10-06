@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travian Automation Panel</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+        
+        :root {
+            --primary: #3b82f6; --primary-hover: #2563eb;
+            --success: #10b981; --success-hover: #059669;
+            --danger: #ef4444; --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --text-main: #f8fafc; --text-muted: #94a3b8;
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-card: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --input-bg: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif; margin: 0; padding: 40px 20px;
+            color: var(--text-main); background: linear-gradient(135deg, #0f172a, #1e1b4b, #020617);
+            background-attachment: fixed; min-height: 100vh; box-sizing: border-box;
+        }
+        
+        * { box-sizing: border-box; }
+
+        .container { max-width: 1100px; margin: auto; display: flex; flex-direction: column; gap: 25px; }
+        
+        .card {
+            background: var(--glass-bg); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            padding: 30px; border-radius: 20px; box-shadow: 0 10px 40px 0 rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+        }
+        
+        h3 {
+            margin-top: 0; font-weight: 800; font-size: 18px; border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between;
+            align-items: center; color: #f0f9ff;
+        }
+
+        input[type="text"], input[type="password"], input[type="number"], select {
+            padding: 12px 18px; border: 1px solid var(--glass-border); border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 14px; outline: none; width: 100%;
+            background-color: var(--input-bg); color: var(--text-main); transition: 0.3s;
+        }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); background-color: rgba(255,255,255,0.12);}
+        select option { background: #0f172a; color: #fff; }
+        
+        .login-row { display: flex; gap: 15px; flex-wrap: wrap; }
+        .login-row > * { flex: 1; min-width: 200px; }
+        
+        button {
+            padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer;
+            font-family: 'Inter', sans-serif; font-weight: 700; font-size: 14px;
+            transition: all 0.2s; text-shadow: 0 1px 2px rgba(0,0,0,0.3); width: 100%;
+        }
+        .btn-theme { background-color: var(--primary); color: white; }
+        .btn-theme:hover { background-color: var(--primary-hover); box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); transform: translateY(-1px); }
+        .btn-red { background-color: var(--danger); color: white; }
+        .btn-red:hover { background-color: var(--danger-hover); box-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+        .btn-green { background-color: var(--success); color: white; font-size: 16px; padding: 15px;}
+        .btn-green:hover { background-color: var(--success-hover); box-shadow: 0 0 15px rgba(16, 185, 129, 0.5); transform: translateY(-2px);}
+
+        .res-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .res-box { background: var(--glass-card); border: 1px solid var(--glass-border); padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; font-size: 18px;}
+        .wood { color: #fca5a5; } .clay { color: #fdba74; } .iron { color: #d1d5db; } .crop { color: #fde047; }
+
+        .queues-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .queue-container { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 5px; }
+        .queue-item { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); padding: 12px 15px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: 600;}
+        .queue-item.real { border-left: 4px solid var(--success); }
+        .queue-item.bot { border-left: 4px solid var(--primary); }
+        .queue-empty { text-align: center; color: var(--text-muted); padding: 20px; font-size: 14px; background: rgba(0,0,0,0.3); border-radius: 10px; border: 1px dashed var(--glass-border);}
+
+        .buildings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .building-card {
+            background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border);
+            border-radius: 12px; padding: 15px 10px; text-align: center; cursor: pointer;
+            transition: all 0.2s; display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .building-card:hover { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.4); transform: translateY(-3px); }
+        .building-card .aid { font-size: 11px; color: var(--text-muted); margin-bottom: 5px;}
+        .building-card .name { font-weight: bold; font-size: 14px; margin-bottom: 10px; color: #fff;}
+        .building-card .level { background: rgba(16, 185, 129, 0.2); color: #34d399; padding: 3px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px); z-index: 1000; justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-content {
+            background: #0f172a; border: 1px solid var(--glass-border); border-radius: 20px;
+            width: 100%; max-width: 380px; padding: 30px; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            animation: popIn 0.3s ease-out;
+        }
+        @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .settings-block { background: var(--glass-card); border: 1px solid var(--glass-border); border-radius: 12px; padding: 25px; margin-bottom: 20px; }
+        .settings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; align-items: start;}
+        
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; flex-shrink: 0;}
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255,255,255,0.1); transition: .4s; border-radius: 34px; border: 1px solid var(--glass-border); }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: var(--text-muted); transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--success); border-color: var(--success); }
+        input:checked + .slider:before { transform: translateX(22px); background-color: white; }
+
+        #toast { visibility: hidden; min-width: 280px; background-color: var(--success); color: #fff; text-align: center; border-radius: 12px; padding: 18px; position: fixed; z-index: 9999; left: 50%; transform: translateX(-50%); bottom: 30px; font-size: 15px; font-weight: bold; box-shadow: 0 10px 30px rgba(0,0,0,0.6); opacity: 0; transition: opacity 0.4s, bottom 0.4s; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #toast.error { background-color: var(--danger); }
+
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .card { padding: 20px 15px; }
+            .res-row { grid-template-columns: 1fr 1fr; }
+            .queues-wrapper { grid-template-columns: 1fr; }
+            .buildings-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+            .settings-grid { grid-template-columns: 1fr; gap: 25px;}
+            #loggedInView > div { flex-direction: column; align-items: stretch !important; gap: 15px;}
+            .header-controls { display: flex; flex-direction: column; gap: 10px;}
+            .mobile-header-wrap { flex-direction: column !important; align-items: flex-start !important; gap: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="card" id="loginFormView">
+        <h3>Connect to Game Server (Auto-Builder Module)</h3>
+        <div class="login-row">
+            <input type="text" id="server" placeholder="Server URL (e.g., https://tx50.travian.com/)">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button id="loginBtn" class="btn-theme" onclick="attemptLogin()">Login</button>
+        </div>
+    </div>
+
+    <div class="card" id="loggedInView" style="display: none; padding: 20px 30px;">
+        <div class="header-controls" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+            <div style="font-size: 18px; font-weight: 800; text-align: center;">👤 <span id="displayUsername" style="color: var(--primary);"></span></div>
+            <select id="villageSelect" onchange="changeVillageManually(this.value)" style="flex: 1; max-width: 400px; font-size: 15px; font-weight: bold;">
+                <option value="">Awaiting connection...</option>
+            </select>
+            <button class="btn-red" style="padding: 10px 20px; font-size: 13px; width: auto;" onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div id="villageDataWrapper" style="display: none;">
+        
+        <div class="card" style="margin-bottom: 25px;">
+            <h3>📊 Resources & Queue Status</h3>
+            <div class="res-row">
+                <div class="res-box wood">🪵 <span id="resWood">0</span></div>
+                <div class="res-box clay">🧱 <span id="resClay">0</span></div>
+                <div class="res-box iron">⚙️ <span id="resIron">0</span></div>
+                <div class="res-box crop">🌾 <span id="resCrop">0</span></div>
+            </div>
+
+            <div class="queues-wrapper">
+                <div>
+                    <h3 style="font-size: 15px; color: var(--success); border: none; margin-bottom: 10px;">🏗️ Active Queue (Server)</h3>
+                    <div class="queue-container" id="realQueueBox"></div>
+                </div>
+                <div>
+                    <h3 style="font-size: 15px; color: var(--primary); border: none; margin-bottom: 10px;">🤖 Automation Queue <button onclick="clearBotQueue()" style="padding: 4px 10px; font-size: 11px; background: rgba(239, 68, 68, 0.2); color: #fca5a5; float: right; width: auto;">Clear</button></h3>
+                    <div class="queue-container" id="botQueueBox"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="margin-bottom: 25px;">
+            
+            <h3 class="mobile-header-wrap" style="border-bottom: none; color: #fde047; display: flex; justify-content: space-between; align-items: center;">
+                <span>🌾 Resource Fields (Slots 1-18)</span>
+                <button class="btn-theme" style="width: auto; padding: 6px 15px; font-size: 12px; background-color: #f59e0b;" onclick="upgradeAllResourcesTo()">⭐ Max All Fields</button>
+            </h3>
+            <div class="buildings-grid" id="resourcesGrid" style="margin-bottom: 40px;">
+            </div>
+
+            <h3 style="border-top: 1px solid var(--glass-border); padding-top: 25px; border-bottom: none; color: #38bdf8;">🏘️ Village Infrastructure (Slots 19+)</h3>
+            <div class="buildings-grid" id="cityGrid">
+            </div>
+            
+        </div>
+
+    </div>
+
+    <div class="card" id="settingsView" style="display: none;">
+        <h3>⚙️ Module Settings</h3>
+        
+        <div class="settings-block">
+            
+            <div style="display: flex; align-items: center; gap: 10px; background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 10px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 25px;">
+                <label class="switch">
+                    <input type="checkbox" id="botActive">
+                    <span class="slider"></span>
+                </label>
+                <span style="font-size: 15px; font-weight: bold; color: var(--success);">Enable Automation for Current Village</span>
+            </div>
+
+            <div class="settings-grid">
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="isCapital">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size: 15px; font-weight: bold; color: #38bdf8;">Capital Village 👑</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: -5px; line-height: 1.6;">
+                        Adjusts maximum resource field levels to 20 instead of 10.
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="buildRandomMode" onchange="toggleManualInterval()">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size: 15px; font-weight: bold;">Evasion Delays 🛡️</span>
+                    </div>
+                    
+                    <div id="manualIntervalDiv" style="display: flex; flex-direction: column; gap: 8px; margin-top: 5px;">
+                        <label style="font-size: 14px; color: var(--text-muted);">Fixed Interval (Seconds):</label>
+                        <input type="number" id="buildInterval" value="15" style="text-align: center;">
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <label class="switch">
+                            <input type="checkbox" id="goldActive">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="font-size: 15px; font-weight: bold; color: #fde047;">Instant Completion (Gold)</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <button class="btn-green" onclick="saveSettings()">💾 Save Settings</button>
+    </div>
+
+</div>
+
+<div id="buildModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modalTitle" style="color: var(--primary); border-bottom: none; margin-bottom: 5px;">Entity Name</h3>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: 0;">Slot <span id="modalAid"></span> | Current Level: <span id="modalCurrentLevel" style="color: #fff; font-weight: bold;"></span></p>
+        
+        <div style="margin: 25px 0;">
+            <label style="display: block; margin-bottom: 10px; font-size: 14px;">Target Upgrade Level:</label>
+            <input type="number" id="modalTargetLevel" min="1" max="20" value="1" style="text-align: center; font-size: 18px; font-weight: bold;">
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-theme" onclick="confirmModal()">➕ Enqueue</button>
+            <button class="btn-red" onclick="closeModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast">System Alert</div>
+
+<script>
+    let syncInterval = null;
+    let selectedBuilding = null; 
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.className = type === 'error' ? 'error show' : 'show';
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3500);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        fetch('/api/status').then(res => res.json()).then(data => {
+            if (data.is_logged_in) {
+                document.getElementById('loginFormView').style.display = 'none';
+                document.getElementById('loggedInView').style.display = 'block';
+                document.getElementById('displayUsername').innerText = data.username;
+                fetchGameDataAndRestore();
+            }
+        });
+    });
+
+    function toggleManualInterval() {
+        const isRandom = document.getElementById('buildRandomMode').checked;
+        const manualDiv = document.getElementById('manualIntervalDiv');
+        if(isRandom) {
+            manualDiv.style.opacity = '0.3';
+            manualDiv.style.pointerEvents = 'none';
+        } else {
+            manualDiv.style.opacity = '1';
+            manualDiv.style.pointerEvents = 'auto';
+        }
+    }
+
+    function attemptLogin() {
+        const btn = document.getElementById('loginBtn');
+        btn.innerText = 'Connecting...';
+        fetch('/api/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                server: document.getElementById('server').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value
+            })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                showToast('Authentication Successful.');
+                document.getElementById('loginFormView').style.display = 'none';
+                document.getElementById('loggedInView').style.display = 'block';
+                document.getElementById('displayUsername').innerText = document.getElementById('username').value;
+                fetchGameDataAndRestore();
+            } else {
+                showToast('Authentication Failed. Check credentials.', 'error');
+                btn.innerText = 'Login';
+            }
+        });
+    }
+
+    function logout() {
+        fetch('/api/logout', { method: 'POST' }).then(() => {
+            localStorage.removeItem('selectedBuildingVillage');
+            window.location.reload();
+        });
+    }
+
+    function fetchGameDataAndRestore() {
+        fetch('/api/fetch_game_data').then(res => res.json()).then(data => {
+            if(data.success) {
+                const select = document.getElementById('villageSelect');
+                select.innerHTML = ''; 
+                data.villages.forEach(v => { select.options.add(new Option(v.name, v.id)); });
+                
+                let savedVid = localStorage.getItem('selectedBuildingVillage');
+                if (savedVid && Array.from(select.options).some(opt => opt.value === savedVid)) {
+                    select.value = savedVid; changeVillage(savedVid);
+                } else if (select.options.length > 0) {
+                    changeVillage(select.value);
+                }
+                
+                if(!syncInterval) syncInterval = setInterval(syncDataBackground, 4000);
+            }
+        });
+    }
+
+    function changeVillageManually(vid) {
+        localStorage.setItem('selectedBuildingVillage', vid);
+        changeVillage(vid);
+    }
+
+    function syncDataBackground() {
+        const vid = document.getElementById('villageSelect').value;
+        if(!vid) return;
+        
+        fetch('/api/get_cache/' + vid).then(res => res.json()).then(data => {
+            if(data.success) {
+                document.getElementById('resWood').innerText = data.resources.wood || 0;
+                document.getElementById('resClay').innerText = data.resources.clay || 0;
+                document.getElementById('resIron').innerText = data.resources.iron || 0;
+                document.getElementById('resCrop').innerText = data.resources.crop || 0;
+                
+                renderRealQueue(data.real_queue);
+                renderBotQueue(data.bot_queue);
+                renderBuildingsGrid(data.buildings);
+            }
+        }).catch(err => console.log("Background sync error:", err));
+    }
+
+    function changeVillage(vid) {
+        if(!vid) return;
+        fetch('/api/change_village/' + vid).then(res => res.json()).then(data => {
+            if(data.success) {
+                document.getElementById('villageDataWrapper').style.display = 'block';
+                document.getElementById('settingsView').style.display = 'block';
+                
+                document.getElementById('resWood').innerText = data.resources.wood || 0;
+                document.getElementById('resClay').innerText = data.resources.clay || 0;
+                document.getElementById('resIron').innerText = data.resources.iron || 0;
+                document.getElementById('resCrop').innerText = data.resources.crop || 0;
+                
+                renderRealQueue(data.real_queue);
+                renderBotQueue(data.bot_queue);
+                renderBuildingsGrid(data.buildings);
+                
+                if(data.settings) {
+                    document.getElementById('botActive').checked = data.settings.bot_active;
+                    document.getElementById('buildInterval').value = data.settings.build_interval;
+                    document.getElementById('buildRandomMode').checked = data.settings.build_random_mode;
+                    document.getElementById('goldActive').checked = data.settings.gold_active;
+                    document.getElementById('isCapital').checked = data.settings.is_capital;
+                    toggleManualInterval();
+                }
+            }
+        });
+    }
+
+    function renderRealQueue(queue) {
+        const box = document.getElementById('realQueueBox');
+        if (!queue || queue.length === 0) {
+            box.innerHTML = '<div class="queue-empty">No active server tasks.</div>';
+            return;
+        }
+        box.innerHTML = queue.map(q => `
+            <div class="queue-item real">
+                <span>🔨 ${q.text}</span>
+                <span style="color:var(--success); font-size:12px;">⏳ ${q.timer}</span>
+            </div>
+        `).join('');
+    }
+
+    function renderBotQueue(queue) {
+        const box = document.getElementById('botQueueBox');
+        if (!queue || queue.length === 0) {
+            box.innerHTML = '<div class="queue-empty">Queue is empty.</div>';
+            return;
+        }
+        box.innerHTML = queue.map((q, i) => `
+            <div class="queue-item bot">
+                <span>${i+1}. ${q.name} <span style="color:var(--text-muted); font-size:12px;">(to Lvl ${q.target_level})</span></span>
+                <span style="color:var(--primary); font-size:12px;">Pending...</span>
+            </div>
+        `).join('');
+    }
+
+    function renderBuildingsGrid(buildings) {
+        const resGrid = document.getElementById('resourcesGrid');
+        const cityGrid = document.getElementById('cityGrid');
+        
+        const resHtml = buildings.filter(b => b.aid <= 18).map(b => `
+            <div class="building-card" onclick="openModal(${b.aid}, '${b.name}', ${b.level})">
+                <div class="aid">Slot ${b.aid}</div>
+                <div class="name">${b.name}</div>
+                <div class="level">Level ${b.level}</div>
+            </div>
+        `).join('');
+        
+        const cityHtml = buildings.filter(b => b.aid > 18 && b.name !== "مکان خالی").map(b => `
+            <div class="building-card" onclick="openModal(${b.aid}, '${b.name}', ${b.level})">
+                <div class="aid">Slot ${b.aid}</div>
+                <div class="name">${b.name}</div>
+                <div class="level">Level ${b.level}</div>
+            </div>
+        `).join('');
+
+        resGrid.innerHTML = resHtml || '<div class="queue-empty" style="grid-column: 1/-1;">No resources found.</div>';
+        cityGrid.innerHTML = cityHtml || '<div class="queue-empty" style="grid-column: 1/-1;">No infrastructure found.</div>';
+    }
+
+    function openModal(aid, name, level) {
+        selectedBuilding = { aid, name, level };
+        document.getElementById('modalTitle').innerText = name;
+        document.getElementById('modalAid').innerText = aid;
+        document.getElementById('modalCurrentLevel').innerText = level;
+        
+        let maxLevel = 20;
+        if (aid <= 18) {
+            const isCapital = document.getElementById('isCapital').checked;
+            maxLevel = isCapital ? 20 : 10;
+        }
+        
+        document.getElementById('modalTargetLevel').max = maxLevel;
+        document.getElementById('modalTargetLevel').value = maxLevel;
+        
+        const modal = document.getElementById('buildModal');
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('buildModal').style.display = 'none';
+        selectedBuilding = null;
+    }
+
+    function confirmModal() {
+        if (!selectedBuilding) return;
+        const targetLevel = parseInt(document.getElementById('modalTargetLevel').value);
+
+        if (targetLevel <= selectedBuilding.level) {
+            showToast('Target level must be higher than current level.', 'error');
+            return;
+        }
+
+        const vid = document.getElementById('villageSelect').value;
+        const payload = {
+            item: { 
+                aid: selectedBuilding.aid, 
+                name: selectedBuilding.name, 
+                current_level: selectedBuilding.level, 
+                target_level: targetLevel 
+            }
+        };
+
+        fetch('/api/village/' + vid + '/queue', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if(data.success) {
+                showToast('Task queued successfully.');
+                renderBotQueue(data.bot_queue);
+                closeModal();
+            }
+        });
+    }
+
+    function clearBotQueue() {
+        const vid = document.getElementById('villageSelect').value;
+        fetch('/api/village/' + vid + '/queue', { method: 'DELETE' }).then(res => res.json()).then(data => {
+            if(data.success) {
+                showToast('Queue cleared.');
+                renderBotQueue([]);
+            }
+        });
+    }
+
+    function upgradeAllResourcesTo() {
+        const vid = document.getElementById('villageSelect').value;
+        if (!vid) return;
+        
+        fetch('/api/village/' + vid + '/upgrade_all_resources', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                showToast('Resources batched successfully.');
+                renderBotQueue(data.bot_queue);
+            } else {
+                showToast('Action failed.', 'error');
+            }
+        });
+    }
+
+    function saveSettings() {
+        const vid = document.getElementById('villageSelect').value;
+        if(!vid) return;
+
+        const payload = {
+            bot_active: document.getElementById('botActive').checked,
+            build_random_mode: document.getElementById('buildRandomMode').checked,
+            build_interval: document.getElementById('buildInterval').value,
+            gold_active: document.getElementById('goldActive').checked,
+            is_capital: document.getElementById('isCapital').checked
+        };
+
+        fetch('/api/village/' + vid + '/settings', {
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
+        }).then(res => res.json()).then(data => {
+            if(data.success) showToast('Configuration saved.');
+        });
+    }
+</script>
+
+</body>
+</html>
